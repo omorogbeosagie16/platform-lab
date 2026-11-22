@@ -1,0 +1,6 @@
+# Copy to uat.tfvars (which is gitignored) and fill in real values.
+admin_cidrs = ["<your-pc-ip>/32", "<ctl-ip>/32"]
+
+servers = {
+  web01 = { instance_type = "t3.micro", os = "ubuntu", role = "web", disk_gb = 20 }
+}
