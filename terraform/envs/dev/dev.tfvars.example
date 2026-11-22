@@ -1,0 +1,8 @@
+# Copy to dev.tfvars (which is gitignored) and fill in real values.
+# admin_cidrs: your PC public IP and the ctl public IP, each as /32.
+admin_cidrs = ["<your-pc-ip>/32", "<ctl-ip>/32"] # add "<jenkins ip>/32" in phase 6
+
+servers = {
+  web01 = { instance_type = "t3.micro", os = "ubuntu", role = "web", disk_gb = 20 }
+  rhel1 = { instance_type = "t3.micro", os = "rocky", role = "rhel", disk_gb = 20 }
+}
