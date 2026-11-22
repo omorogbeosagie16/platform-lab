@@ -1,0 +1,5 @@
+---
+- name: Bake golden image
+  hosts: all
+  become: true
+  roles: [common, hardening]
