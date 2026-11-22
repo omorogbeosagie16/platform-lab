@@ -1,62 +1,80 @@
-data "aws_ssm_parameter" "ubuntu" {
-  name = "/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
+module "platform" {
+  source              = "../../modules/platform"
+  env                 = var.env
+  vpc_cidr            = var.vpc_cidr
+  admin_user          = var.admin_user
+  ssh_public_key_path = var.ssh_public_key_path
+  admin_cidrs         = var.admin_cidrs
+  servers             = var.servers
 }
 
-# Rocky Linux 9 official images (owner id from the Rocky project)
-data "aws_ami" "rocky" {
-  most_recent = true
-  owners      = ["792107900819"]
-  filter {
-    name   = "name"
-    values = ["Rocky-9-EC2-Base-9.*x86_64*"]
-  }
+# moved blocks: rename the entries in state so Terraform does not destroy and recreate.
+moved {
+  from = aws_vpc.this
+  to   = module.platform.aws_vpc.this
 }
 
-locals {
-  amis = {
-    ubuntu = data.aws_ssm_parameter.ubuntu.value
-    rocky  = data.aws_ami.rocky.id
-  }
+moved {
+  from = aws_internet_gateway.this
+  to   = module.platform.aws_internet_gateway.this
 }
 
-resource "aws_key_pair" "lab" {
-  key_name   = "${var.env}-lab"
-  public_key = file(pathexpand(var.ssh_public_key_path))
+moved {
+  from = aws_subnet.public
+  to   = module.platform.aws_subnet.public
 }
 
-resource "aws_instance" "this" {
-  for_each = var.servers
+moved {
+  from = aws_route_table.public
+  to   = module.platform.aws_route_table.public
+}
 
-  ami                         = local.amis[each.value.os]
-  instance_type               = each.value.instance_type
-  subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.base.id]
-  key_name                    = aws_key_pair.lab.key_name
-  associate_public_ip_address = true
-  iam_instance_profile        = each.value.role == "monitoring" ? "platform-lab-monitoring" : null
+moved {
+  from = aws_route_table_association.public
+  to   = module.platform.aws_route_table_association.public
+}
 
-  user_data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
-    admin_user = var.admin_user
-    ssh_key    = trimspace(file(pathexpand(var.ssh_public_key_path)))
-  })
+moved {
+  from = aws_security_group.base
+  to   = module.platform.aws_security_group.base
+}
 
-  metadata_options {
-    http_tokens                 = "required"
-    http_put_response_hop_limit = 2
-  }
+moved {
+  from = aws_vpc_security_group_ingress_rule.ssh
+  to   = module.platform.aws_vpc_security_group_ingress_rule.ssh
+}
 
-  root_block_device {
-    volume_size = each.value.disk_gb
-    volume_type = "gp3"
-    encrypted   = true
-  }
+moved {
+  from = aws_vpc_security_group_ingress_rule.k8s_api
+  to   = module.platform.aws_vpc_security_group_ingress_rule.k8s_api
+}
 
-  tags = {
-    Name = "${var.env}-${each.key}"
-    Role = each.value.role
-  }
+moved {
+  from = aws_vpc_security_group_ingress_rule.http
+  to   = module.platform.aws_vpc_security_group_ingress_rule.http
+}
 
-  lifecycle {
-    ignore_changes = [ami, user_data]
-  }
+moved {
+  from = aws_vpc_security_group_ingress_rule.https
+  to   = module.platform.aws_vpc_security_group_ingress_rule.https
+}
+
+moved {
+  from = aws_vpc_security_group_ingress_rule.intra_vpc
+  to   = module.platform.aws_vpc_security_group_ingress_rule.intra_vpc
+}
+
+moved {
+  from = aws_vpc_security_group_egress_rule.all
+  to   = module.platform.aws_vpc_security_group_egress_rule.all
+}
+
+moved {
+  from = aws_key_pair.lab
+  to   = module.platform.aws_key_pair.lab
+}
+
+moved {
+  from = aws_instance.this
+  to   = module.platform.aws_instance.this
 }

@@ -1,13 +1,7 @@
 output "servers" {
-  value = {
-    for k, i in aws_instance.this : k => {
-      public_ip  = i.public_ip
-      private_ip = i.private_ip
-      role       = i.tags["Role"]
-    }
-  }
+  value = module.platform.servers
 }
 
 output "vpc_cidr" {
-  value = aws_vpc.this.cidr_block
+  value = module.platform.vpc_cidr
 }
