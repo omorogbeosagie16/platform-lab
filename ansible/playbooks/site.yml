@@ -2,4 +2,4 @@
 - name: Baseline
   hosts: all
   become: true
-  roles: [common]
+  roles: [common, hardening]

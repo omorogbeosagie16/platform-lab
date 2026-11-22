@@ -1,8 +1,6 @@
 ---
-# ansible-lint runs from the repo root, so it does not see ansible/ansible.cfg
-# (roles_path) or the collections installed for the real runs.
-# Mocks let the linter check our own YAML without resolving these.
-mock_roles:
-  - common
+# Roles are found through the ansible/playbooks/roles symlink (-> ../roles),
+# so the linter checks real roles. Only the collection module is mocked,
+# because the pre-commit environment does not have community.general installed.
 mock_modules:
   - community.general.timezone
