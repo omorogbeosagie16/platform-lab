@@ -1,0 +1,12 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+*.auto.tfvars
+secrets.tfvars
+.vault_pass
+*.retry
+.venv/
+__pycache__/
