@@ -10,3 +10,4 @@ secrets.tfvars
 *.retry
 .venv/
 __pycache__/
+terraform/envs/*/*.tfvars
