@@ -12,10 +12,21 @@ data "aws_ami" "rocky" {
   }
 }
 
+# Our own golden image baked by Packer (packer/ubuntu.pkr.hcl), found by tag.
+data "aws_ami" "golden" {
+  most_recent = true
+  owners      = ["self"]
+  filter {
+    name   = "tag:Role"
+    values = ["golden"]
+  }
+}
+
 locals {
   amis = {
     ubuntu = data.aws_ssm_parameter.ubuntu.value
     rocky  = data.aws_ami.rocky.id
+    golden = data.aws_ami.golden.id
   }
 }
 
