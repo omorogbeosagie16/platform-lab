@@ -1,0 +1,46 @@
+---
+# Installs Jenkins LTS (the Ansible equivalent of section 6.1 of the manual).
+- name: Install Java and prerequisites
+  ansible.builtin.apt:
+    name:
+      - fontconfig
+      - "{{ jenkins_java_package }}"
+      - curl
+      - gnupg
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create the apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download the Jenkins repository signing key
+  ansible.builtin.get_url:
+    url: "{{ jenkins_key_url }}"
+    dest: "{{ jenkins_key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add the Jenkins apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ jenkins_repo }}"
+    filename: jenkins
+    state: present
+    update_cache: true
+
+- name: Install Jenkins
+  ansible.builtin.apt:
+    name: jenkins
+    state: present
+
+- name: Enable and start Jenkins
+  ansible.builtin.service:
+    name: jenkins
+    state: started
+    enabled: true

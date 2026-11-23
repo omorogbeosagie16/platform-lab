@@ -1,0 +1,17 @@
+---
+cicd_tools_hashicorp_key_url: https://apt.releases.hashicorp.com/gpg
+cicd_tools_hashicorp_key_path: /etc/apt/keyrings/hashicorp.asc
+cicd_tools_venv_path: /opt/venv/ansible
+cicd_tools_pip_packages:
+  - ansible
+  - ansible-lint
+  - boto3
+  - botocore
+  - requests
+  - pyyaml
+  - jmespath
+cicd_tools_collections:
+  - amazon.aws
+  - community.general
+  - ansible.posix
+cicd_tools_awscli_url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip

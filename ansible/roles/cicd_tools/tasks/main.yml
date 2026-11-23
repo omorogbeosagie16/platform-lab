@@ -1,0 +1,81 @@
+---
+# Tools the Jenkins pipeline calls (the Ansible equivalent of section 6.2 of the manual,
+# trimmed: no Docker, Packer or tflint).
+- name: Create the apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download the HashiCorp repository signing key
+  ansible.builtin.get_url:
+    url: "{{ cicd_tools_hashicorp_key_url }}"
+    dest: "{{ cicd_tools_hashicorp_key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add the HashiCorp apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by={{ cicd_tools_hashicorp_key_path }}] https://apt.releases.hashicorp.com {{ ansible_facts['distribution_release'] }} main"
+    filename: hashicorp
+    state: present
+    update_cache: true
+
+- name: Install Terraform, git and helpers
+  ansible.builtin.apt:
+    name:
+      - terraform
+      - git
+      - python3-venv
+      - unzip
+      - jq
+    state: present
+
+- name: Install Ansible and related Python packages into a virtualenv
+  ansible.builtin.pip:
+    name: "{{ cicd_tools_pip_packages }}"
+    virtualenv: "{{ cicd_tools_venv_path }}"
+    virtualenv_command: python3 -m venv
+
+- name: Install Ansible collections for the jenkins user
+  ansible.builtin.command: >-
+    {{ cicd_tools_venv_path }}/bin/ansible-galaxy collection install
+    {{ cicd_tools_collections | join(' ') }}
+  become: true
+  become_user: jenkins
+  environment:
+    HOME: /var/lib/jenkins
+  args:
+    creates: /var/lib/jenkins/.ansible/collections/ansible_collections/amazon/aws
+  changed_when: true
+
+- name: Download the AWS CLI v2 installer
+  ansible.builtin.get_url:
+    url: "{{ cicd_tools_awscli_url }}"
+    dest: /tmp/awscliv2.zip
+    mode: "0644"
+
+- name: Unpack the AWS CLI installer
+  ansible.builtin.unarchive:
+    src: /tmp/awscliv2.zip
+    dest: /tmp
+    remote_src: true
+    creates: /tmp/aws/install
+
+- name: Install the AWS CLI
+  ansible.builtin.command: /tmp/aws/install --update
+  args:
+    creates: /usr/local/bin/aws
+  changed_when: true
+
+- name: Check which AWS identity the server has (instance role, no stored keys)
+  ansible.builtin.command: aws sts get-caller-identity --region us-east-2 --query Arn --output text
+  register: cicd_tools_aws_identity
+  changed_when: false
+
+- name: Show the AWS identity
+  ansible.builtin.debug:
+    msg: "{{ cicd_tools_aws_identity.stdout }}"

@@ -1,0 +1,11 @@
+---
+# Configure the Jenkins server (found through the dynamic inventory by its Role=jenkins tag).
+# The server is built by Terraform without the ops user, so connect as ubuntu.
+- name: Configure Jenkins server
+  hosts: role_jenkins
+  become: true
+  vars:
+    ansible_user: ubuntu
+  roles:
+    - jenkins
+    - cicd_tools
