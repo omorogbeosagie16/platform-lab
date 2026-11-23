@@ -1,0 +1,8 @@
+---
+# Turn the Terraform-built Role=k8s server into a k3s node (inventory group role_k8s).
+- name: Install k3s
+  hosts: role_k8s
+  become: true
+  roles:
+    - common
+    - k3s
