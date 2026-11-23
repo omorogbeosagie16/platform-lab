@@ -41,7 +41,8 @@ pipeline {
           dir(env.TF_DIR) {
             sh '''
               # The real tfvars is a secret held in Jenkins, not in Git.
-              printf '%s\n' "$TFVARS" > dev.tfvars
+              # It is stored base64-encoded (one line) so no newlines are lost.
+              printf '%s' "$TFVARS" | base64 -d > dev.tfvars
               # Derive the public key from the private key so no extra file is needed.
               ssh-keygen -y -f "$SSH_KEY" > "$WORKSPACE/lab.pub"
               terraform init -backend-config=backend.hcl
