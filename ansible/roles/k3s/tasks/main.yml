@@ -1,0 +1,25 @@
+---
+# Installs a single-node k3s (lightweight Kubernetes) server with embedded etcd.
+- name: Download the k3s install script
+  ansible.builtin.get_url:
+    url: "{{ k3s_install_url }}"
+    dest: /usr/local/bin/k3s-install.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install k3s server with embedded etcd
+  ansible.builtin.command: /usr/local/bin/k3s-install.sh
+  environment:
+    INSTALL_K3S_EXEC: "server --cluster-init --tls-san {{ ansible_host }}"
+  args:
+    creates: /usr/local/bin/k3s
+  changed_when: true
+
+- name: Wait for the node to be Ready
+  ansible.builtin.command: /usr/local/bin/k3s kubectl get nodes
+  register: k3s_nodes
+  until: k3s_nodes.stdout is regex('\sReady\s')
+  retries: 20
+  delay: 6
+  changed_when: false
